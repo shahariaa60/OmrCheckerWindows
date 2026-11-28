@@ -1,4 +1,4 @@
-name: Build Byabodhan OMR Windows EXE
+name: Build Byabodhan OMR Windows Installer
 
 on:
   push:
@@ -6,18 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  build-installer:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Locate project files
+      - name: Locate project directory
         shell: bash
         run: |
           if [ -f "main.py" ]; then
             echo "PROJ_DIR=." >> $GITHUB_ENV
-          elif [ -f "ByabodhanOMR_WindowsApp/main.py" ]; then
-            echo "PROJ_DIR=ByabodhanOMR_WindowsApp" >> $GITHUB_ENV
+          elif [ -f "ByabodhanOMR_Windows_v2/main.py" ]; then
+            echo "PROJ_DIR=ByabodhanOMR_Windows_v2" >> $GITHUB_ENV
           else
             echo "main.py not found!" && ls -la && exit 1
           fi
@@ -26,18 +26,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies and PyInstaller
+      - name: Install Python dependencies & PyInstaller
         working-directory: ${{ env.PROJ_DIR }}
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
-      - name: Build Windows EXE
+      - name: Build fast onedir app with instant Splash Screen
         working-directory: ${{ env.PROJ_DIR }}
-        run: pyinstaller --noconfirm --onefile --windowed --name "ByabodhanOMR_Windows" --icon "assets/logo.ico" --add-data "assets/logo.jpeg;assets" --add-data "assets/logo.ico;assets" main.py
+        run: pyinstaller --noconfirm --onedir --windowed --name "ByabodhanOMR" --icon "assets/logo.ico" --splash "assets/splash.png" --add-data "assets;assets" --add-data "ui;ui" main.py
 
-      - name: Upload Downloadable Windows EXE
+      - name: Build Windows Setup Installer (Inno Setup)
+        working-directory: ${{ env.PROJ_DIR }}
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist\ByabodhanOMR\assets" | Out-Null
+          Copy-Item "assets\logo.ico" "dist\ByabodhanOMR\assets\logo.ico" -Force
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y }
+          & $iscc installer.iss
+
+      - name: Upload Downloadable Windows Installer (Setup.exe)
         uses: actions/upload-artifact@v4
         with:
-          name: Byabodhan-OMR-Windows-EXE
-          path: ${{ env.PROJ_DIR }}/dist/ByabodhanOMR_Windows.exe
+          name: Byabodhan-OMR-Windows-Installer
+          path: ${{ env.PROJ_DIR }}/installer_out/ByabodhanOMR_Setup.exe
