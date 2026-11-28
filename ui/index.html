@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Byabodhan OMR — OMR Exam Scanner</title>
+<style>
+  :root {
+    --sidebar: #1E293B;
+    --sidebar-hover: #293548;
+    --sidebar-active: #334155;
+    --crimson: #B91C1C;
+    --crimson-hover: #991B1B;
+    --bg: #EEF1F6;
+    --card: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --green-bg: #DCFCE7;
+    --green-tx: #166534;
+    --red-bg: #FEE2E2;
+    --red-tx: #991B1B;
+    --amber-card: #FBA83C;
+    --amber-bg: #FEF3C7;
+    --amber-tx: #92400E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Nirmala UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    user-select: none;
+  }
+
+  /* ===== Left Dark Slate Sidebar ===== */
+  .sidebar {
+    width: 215px;
+    background: var(--sidebar);
+    color: #F8FAFC;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 14px;
+    flex-shrink: 0;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 28px;
+    gap: 10px;
+  }
+  .brand-logo-wrap {
+    background: #FFFFFF;
+    padding: 8px 12px;
+    border-radius: 12px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .brand-logo-wrap img {
+    height: 44px;
+    width: auto;
+    object-fit: contain;
+  }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: #FFFFFF;
+  }
+  .nav-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #CBD5E1;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); color: #FFFFFF; }
+  .nav-item.active {
+    background: var(--sidebar-active);
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3.5px;
+    border-radius: 0 4px 4px 0;
+    background: #EF4444;
+  }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.9; }
+  .sidebar-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+
+  /* ===== Main Workspace ===== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Top Bar */
+  .topbar {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .page-title { font-size: 21px; font-weight: 700; color: var(--text); margin-right: 8px; }
+  .sel-group { display: flex; flex-direction: column; gap: 2px; }
+  .sel-group label { font-size: 11px; font-weight: 600; color: var(--muted); padding-left: 4px; }
+  .pill-select {
+    appearance: none;
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 999px;
+    padding: 6px 28px 6px 13px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    min-width: 118px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .pill-select:focus { border-color: var(--crimson); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .fb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--green-bg);
+    color: var(--green-tx);
+    cursor: pointer;
+    border: none;
+  }
+  .fb-badge.offline { background: var(--amber-bg); color: var(--amber-tx); }
+  .fb-dot { width: 8px; height: 8px; border-radius: 50%; background: #16A34A; }
+  .fb-badge.offline .fb-dot { background: #D97706; }
+  .btn-outline-pill {
+    padding: 7px 15px;
+    border-radius: 999px;
+    border: 1.5px solid #1E293B;
+    background: #FFFFFF;
+    color: #0F172A;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-outline-pill:hover { background: #1E293B; color: #FFFFFF; }
+
+  /* Content Split */
+  .view-body {
+    flex: 1;
+    padding: 16px 20px;
+    overflow: hidden;
+    display: flex;
+    gap: 16px;
+  }
+  .left-col {
+    flex: 1.65;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .right-col {
+    flex: 1;
+    min-width: 310px;
+    max-width: 400px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 10px rgba(15,23,42,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* 4 KPI Cards */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 13px 15px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .kpi-card.amber {
+    background: linear-gradient(135deg, #FBBF49, #F59E0B);
+    border-color: #F59E0B;
+    color: #1E293B;
+  }
+  .kpi-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .kpi-card.amber .kpi-label { color: #451A03; }
+  .kpi-val-row { display: flex; align-items: center; justify-content: space-between; }
+  .kpi-val { font-size: 25px; font-weight: 800; letter-spacing: -0.5px; }
+
+  /* Progress Banner */
+  .prog-bar-wrap {
+    display: none;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    align-items: center;
+    gap: 12px;
+  }
+  .prog-bar-wrap.show { display: flex; }
+  .prog-track { flex: 1; height: 8px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--crimson); width: 0%; transition: width 0.2s; }
+  .prog-text { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+  /* Table Card */
+  .table-card {
+    flex: 1;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 10px rgba(15,23,42,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .table-head {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .table-head h3 { font-size: 15px; font-weight: 700; }
+  .search-input {
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+    padding: 6px 12px 6px 32px;
+    font-size: 13px;
+    width: 210px;
+    outline: none;
+    background: #F8FAFC url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  }
+  .search-input:focus { border-color: var(--crimson); background-color: #FFFFFF; }
+  .table-scroll { flex: 1; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: #F8FAFC;
+    color: #334155;
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    z-index: 2;
+  }
+  tbody tr {
+    border-bottom: 1px solid #F1F5F9;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #F8FAFC; }
+  tbody tr.selected-row { background: #FEF2F2; }
+  tbody td { padding: 9px 12px; vertical-align: middle; }
+  .chk { width: 16px; height: 16px; accent-color: var(--crimson); cursor: pointer; }
+  .score-pill {
+    display: inline-block;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #FFFFFF;
+    background: #15803D;
+  }
+  .score-pill.low { background: #B91C1C; }
+  .score-pill.none { background: #64748B; }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 11.5px;
+    background: var(--green-bg);
+    color: var(--green-tx);
+  }
+  .status-pill.pending { background: var(--amber-bg); color: var(--amber-tx); }
+  .status-pill.error { background: var(--red-bg); color: var(--red-tx); }
+  .icon-btn {
+    border: none;
+    background: transparent;
+    color: #64748B;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .icon-btn:hover { background: #F1F5F9; color: var(--crimson); }
+
+  /* Bottom Action Bar inside Table Card */
+  .table-actions {
+    padding: 11px 14px;
+    border-top: 1px solid var(--border);
+    background: #FFFFFF;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn-primary {
+    background: var(--crimson);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--crimson-hover); }
+  .btn-sec {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sec:hover { border-color: #1E293B; background: #F8FAFC; }
+
+  /* Right Preview Panel */
+  .preview-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .preview-head h3 { font-size: 15px; font-weight: 700; }
+  .zoom-box { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .zoom-box input { width: 85px; accent-color: var(--crimson); cursor: pointer; }
+  .preview-canvas {
+    flex: 1;
+    overflow: auto;
+    background: #F8FAFC;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12px;
+  }
+  .preview-canvas img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transform-origin: top center;
+    transition: width 0.12s ease;
+  }
+  .preview-empty {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px;
+    line-height: 1.6;
+  }
+  .quick-edit {
+    padding: 12px 15px;
+    border-top: 1px solid var(--border);
+    background: #FFFFFF;
+  }
+  .quick-edit-title { font-size: 12.5px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .quick-edit-row { display: flex; align-items: center; gap: 7px; }
+  .qe-input {
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-size: 13px;
+    font-weight: 600;
+    width: 96px;
+    outline: none;
+  }
+  .qe-input.sm { width: 46px; text-align: center; }
+  .btn-dark {
+    margin-left: auto;
+    background: #1E293B;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-dark:hover { background: #0F172A; }
+
+  /* Secondary Views (Exam Setup / Sheet Sync / Settings) */
+  .panel-view {
+    display: none;
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+  }
+  .panel-view.active { display: block; }
+  .view-body.hidden { display: none; }
+  .card-box {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 720px;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+    margin-bottom: 16px;
+  }
+  .card-box h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .field input {
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--crimson); }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: #0F172A;
+    color: #FFFFFF;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { background: var(--crimson); }
+</style>
+</head>
+<body>
+
+<!-- Left Sidebar -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo-wrap">
+      <img src="/assets/logo.jpeg" alt="ব্যবধান শিক্ষালয়">
+    </div>
+    <div class="brand-name">Byabodhan OMR</div>
+  </div>
+  <nav class="nav-list">
+    <button class="nav-item active" data-view="scan">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Batch Scan
+    </button>
+    <button class="nav-item" data-view="setup">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Exam Setup
+    </button>
+    <button class="nav-item" data-view="sync">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Sheet Sync
+    </button>
+  </nav>
+  <div class="sidebar-foot">
+    <button class="nav-item" data-view="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Settings
+    </button>
+  </div>
+</aside>
+
+<!-- Main Workspace -->
+<div class="main">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="page-title">Batch Scanner</div>
+    <div class="sel-group">
+      <label>Class</label>
+      <select id="selClass" class="pill-select"></select>
+    </div>
+    <div class="sel-group">
+      <label>Exam Type</label>
+      <select id="selType" class="pill-select"></select>
+    </div>
+    <div class="sel-group">
+      <label>Subject / Exam</label>
+      <select id="selExam" class="pill-select" style="min-width:155px"></select>
+    </div>
+    <div class="topbar-right">
+      <button id="btnFbStatus" class="fb-badge offline" title="Click to refresh from Firebase">
+        <span class="fb-dot"></span> <span id="fbText">Connecting...</span>
+      </button>
+      <button id="btnOfflineJson" class="btn-outline-pill">Offline JSON</button>
+    </div>
+  </header>
+
+  <!-- VIEW 1: BATCH SCANNER (Main Modern Dashboard) -->
+  <div id="viewScan" class="view-body">
+    <div class="left-col">
+      <!-- 4 KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Scanned</div>
+          <div class="kpi-val-row"><span id="kpiTotal" class="kpi-val">0</span><span style="font-size:20px">📄</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Synced</div>
+          <div class="kpi-val-row"><span id="kpiSynced" class="kpi-val">0</span><span style="font-size:20px">☁️</span></div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Needs Review</div>
+          <div class="kpi-val-row"><span id="kpiReview" class="kpi-val">0</span><span style="font-size:20px">⚠️</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg. Score</div>
+          <div class="kpi-val-row"><span id="kpiAvg" class="kpi-val">0%</span><span style="font-size:20px">📈</span></div>
+        </div>
+      </div>
+
+      <!-- Live Progress Banner -->
+      <div id="progWrap" class="prog-bar-wrap">
+        <span id="progText" class="prog-text">স্ক্যান হচ্ছে...</span>
+        <div class="prog-track"><div id="progFill" class="prog-fill"></div></div>
+        <button id="btnStopScan" class="btn-sec" style="padding:4px 12px;font-size:11.5px">Stop</button>
+      </div>
+
+      <!-- Scanned Sheets Table -->
+      <div class="table-card">
+        <div class="table-head">
+          <h3>Scanned Sheets</h3>
+          <input id="searchBox" type="text" class="search-input" placeholder="Search roll or file...">
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px"><input id="chkAll" type="checkbox" class="chk" checked></th>
+                <th>Roll No</th>
+                <th>Set</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th style="width:74px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-actions">
+          <button id="btnScanFiles" class="btn-primary">Scan PDF / Images</button>
+          <button id="btnScanFolder" class="btn-sec">Scan Folder</button>
+          <button id="btnExportSel" class="btn-sec">Export Selected PDF</button>
+          <button id="btnExportAll" class="btn-sec">Export All PDF</button>
+          <button id="btnBatchSync" class="btn-sec">Batch Sync</button>
+          <button id="btnExportCsv" class="btn-sec" style="margin-left:auto">CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sheet Preview Panel -->
+    <div class="right-col">
+      <div class="preview-head">
+        <h3>Sheet Preview</h3>
+        <div class="zoom-box">
+          <span>Zoom</span>
+          <input id="zoomSlider" type="range" min="60" max="200" value="100">
+        </div>
+      </div>
+      <div id="previewCanvas" class="preview-canvas">
+        <div class="preview-empty">
+          কোনো খাতা সিলেক্ট করা হয়নি।<br><br>
+          <b>Scan PDF / Images</b> বা <b>Scan Folder</b> চাপুন, তারপর তালিকার যেকোনো রো-তে ক্লিক করলে এখানে মার্কড উত্তরপত্র দেখা যাবে।
+        </div>
+      </div>
+      <div class="quick-edit">
+        <div class="quick-edit-title">
+          <span>Quick Edit &amp; Re-Sync</span>
+          <button id="btnSinglePdf" class="icon-btn" style="font-size:12px;font-weight:700;color:#B91C1C">Save PDF</button>
+        </div>
+        <div class="quick-edit-row">
+          <span style="font-size:12px;color:#64748B;font-weight:600">Roll:</span>
+          <input id="qeRoll" type="text" class="qe-input" placeholder="10204">
+          <span style="font-size:12px;color:#64748B;font-weight:600">Set:</span>
+          <input id="qeSet" type="text" class="qe-input sm" readonly>
+          <button id="btnReSync" class="btn-dark">Re-Sync</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: EXAM SETUP -->
+  <div id="viewSetup" class="panel-view">
+    <div class="card-box">
+      <h2>Exam Marking &amp; Offline JSON Settings</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>মোট প্রশ্ন (Total Questions, 1–50)</label>
+          <input id="inpTotalQ" type="number" min="1" max="50" value="50">
+        </div>
+        <div class="field">
+          <label>প্রতি সঠিক উত্তরের নম্বর (+)</label>
+          <input id="inpPos" type="number" step="0.25" value="1.0">
+        </div>
+        <div class="field">
+          <label>নেগেটিভ মার্ক (-)</label>
+          <input id="inpNeg" type="number" step="0.25" value="0.0">
+        </div>
+        <div class="field">
+          <label>সক্রিয় উত্তরমালা সেট</label>
+          <input id="inpSetsInfo" type="text" readonly value="লোড করা হয়নি">
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button id="btnApplyMarks" class="btn-primary">নম্বর সেটিংস সংরক্ষণ</button>
+        <button id="btnLoadJson2" class="btn-sec">অফলাইন JSON ফাইল লোড করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 3: GOOGLE SHEET SYNC -->
+  <div id="viewSync" class="panel-view">
+    <div class="card-box">
+      <h2>Multi-Tab Google Sheet Sync (Code.gs)</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>Google Sheet ট্যাবের নাম (ক্লাস অনুযায়ী আলাদা ট্যাব)</label>
+          <input id="inpSheetTab" type="text" placeholder="যেমন: ৯ম শ্রেণি">
+        </div>
+        <div class="field">
+          <label>কলামের নাম (বিষয় / পরীক্ষা)</label>
+          <input id="inpSheetCol" type="text" placeholder="যেমন: Bangla বা মডেল টেস্ট - বাংলা">
+        </div>
+        <div class="field full">
+          <label>Google Apps Script Web App URL (/exec)</label>
+          <input id="inpGasUrl" type="text">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600">
+        <input id="chkAutoSync" type="checkbox" class="chk" checked>
+        স্ক্যান শেষে স্বয়ংক্রিয়ভাবে Google Sheet-এ ব্যাচ সিঙ্ক করুন
+      </label>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button id="btnSaveSync" class="btn-primary">সেটিংস সেভ করুন</button>
+        <button id="btnSyncNow2" class="btn-sec">এখনই সব পেন্ডিং সিঙ্ক করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 4: SETTINGS -->
+  <div id="viewSettings" class="panel-view">
+    <div class="card-box">
+      <h2>Byabodhan OMR Scanner v2.0 (Windows)</h2>
+      <p style="font-size:13.5px;color:#475569;line-height:1.7">
+        ব্যবধান শিক্ষালয়ের জন্য তৈরি ১০০% অফলাইন OpenCV + PyMuPDF ব্যাচ OMR স্ক্যানার।<br>
+        • ৫০০+ খাতা বা বড় PDF মেমোরি-সেফ স্ট্রিমিং মোডে ক্র্যাশ ছাড়াই প্রসেস হয়।<br>
+        • প্রতিটি ক্লাসের জন্য Google Sheet-এ আলাদা ট্যাবে ফাস্ট ব্যাচ সিঙ্ক।<br>
+        • সিলেক্ট করা বা সব খাতার মার্কড PDF প্রিভিউ ও ডাউনলোড সুবিধা।
+      </p>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button id="btnClearAll" class="btn-sec" style="color:#B91C1C;border-color:#FCA5A5">বর্তমান ব্যাচের সব ফলাফল মুছুন</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let state = { classes: [], exam_types: [], exams: [], results: [], selectedIdx: -1 };
+let checkedSet = new Set();
+
+function toast(msg, isErr = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = isErr ? 'show err' : 'show';
+  clearTimeout(toast._id);
+  toast._id = setTimeout(() => t.className = '', 3200);
+}
+
+// Sidebar Navigation
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    $('#viewScan').classList.toggle('hidden', v !== 'scan');
+    $('#viewSetup').classList.toggle('active', v === 'setup');
+    $('#viewSync').classList.toggle('active', v === 'sync');
+    $('#viewSettings').classList.toggle('active', v === 'settings');
+  });
+});
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function initApp() {
+  const data = await window.pywebview.api.get_initial_state();
+  $('#inpGasUrl').value = data.settings.gas_url || '';
+  $('#chkAutoSync').checked = !!data.settings.auto_sync;
+  applyBundle(data.bundle);
+  refreshFirebase();
+}
+
+function applyBundle(bundle) {
+  state.classes = bundle.classes || [];
+  state.exam_types = bundle.exam_types || [];
+  state.exams = bundle.exams || [];
+
+  $('#selClass').innerHTML = state.classes.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  $('#selType').innerHTML = state.exam_types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+  const badge = $('#btnFbStatus');
+  if (bundle.source === 'online') {
+    badge.className = 'fb-badge';
+    $('#fbText').textContent = 'Firebase Connected';
+  } else if (bundle.source === 'cache') {
+    badge.className = 'fb-badge offline';
+    $('#fbText').textContent = 'Offline Cache';
+  } else {
+    badge.className = 'fb-badge offline';
+    $('#fbText').textContent = 'Offline Mode';
+  }
+  onFilterChange();
+}
+
+function onFilterChange() {
+  const cls = $('#selClass').value;
+  const typ = $('#selType').value;
+  if (cls) $('#inpSheetTab').value = cls;
+  const list = state.exams.filter(e => (!cls || e.className === cls) && (!typ || e.examType === typ));
+  state.filteredExams = list;
+  if (!list.length) {
+    $('#selExam').innerHTML = `<option value="">কোনো পরীক্ষা নেই</option>`;
+    return;
+  }
+  $('#selExam').innerHTML = list.map((e, i) => `<option value="${i}">${esc(e.title)} (${e.totalQuestions})</option>`).join('');
+  onExamSelect();
+}
+
+async function onExamSelect() {
+  const idx = parseInt($('#selExam').value, 10);
+  if (isNaN(idx) || !state.filteredExams[idx]) return;
+  const ex = state.filteredExams[idx];
+  $('#inpTotalQ').value = ex.totalQuestions;
+  $('#inpPos').value = ex.positiveMark;
+  $('#inpNeg').value = ex.negativeMark;
+  $('#inpSetsInfo').value = Object.keys(ex.answerKeys || {}).join(', ') || 'নেই';
+  $('#inpSheetCol').value = ex.subject || `${ex.examType} - ${ex.title}`;
+  await window.pywebview.api.set_active_exam(ex);
+}
+
+$('#selClass').addEventListener('change', onFilterChange);
+$('#selType').addEventListener('change', onFilterChange);
+$('#selExam').addEventListener('change', onExamSelect);
+
+async function refreshFirebase() {
+  $('#fbText').textContent = 'Syncing...';
+  const bundle = await window.pywebview.api.refresh_firebase();
+  applyBundle(bundle);
+  if (bundle.source === 'online') toast('Firebase উত্তরমালা আপডেট হয়েছে');
+}
+$('#btnFbStatus').addEventListener('click', refreshFirebase);
+
+async function loadOfflineJson() {
+  const res = await window.pywebview.api.pick_offline_json();
+  if (!res || res.cancelled) return;
+  if (res.error) return toast(res.error, true);
+  const ex = res.exam;
+  $('#inpTotalQ').value = ex.totalQuestions;
+  $('#inpPos').value = ex.positiveMark;
+  $('#inpNeg').value = ex.negativeMark;
+  $('#inpSetsInfo').value = Object.keys(ex.answerKeys || {}).join(', ') || 'নেই';
+  if (ex.className) $('#inpSheetTab').value = ex.className;
+  if (ex.subject || ex.title) $('#inpSheetCol').value = ex.subject || ex.title;
+  toast(`অফলাইন JSON লোড হয়েছে: ${ex.title}`);
+}
+$('#btnOfflineJson').addEventListener('click', loadOfflineJson);
+$('#btnLoadJson2').addEventListener('click', loadOfflineJson);
+
+async function pushSyncSettings() {
+  await window.pywebview.api.save_settings({
+    gas_url: $('#inpGasUrl').value.trim(),
+    auto_sync: $('#chkAutoSync').checked,
+    sheet_tab: $('#inpSheetTab').value.trim(),
+    sheet_col: $('#inpSheetCol').value.trim(),
+    total_q: parseInt($('#inpTotalQ').value, 10) || 50,
+    pos: parseFloat($('#inpPos').value) || 1.0,
+    neg: parseFloat($('#inpNeg').value) || 0.0
+  });
+}
+$('#btnApplyMarks').addEventListener('click', async () => { await pushSyncSettings(); toast('নম্বর সেটিংস সংরক্ষিত হয়েছে'); });
+$('#btnSaveSync').addEventListener('click', async () => { await pushSyncSettings(); toast('Google Sheet সেটিংস সেভ হয়েছে'); });
+
+// Scanning Actions
+$('#btnScanFiles').addEventListener('click', async () => {
+  await pushSyncSettings();
+  const r = await window.pywebview.api.start_scan_files();
+  if (r && r.error) toast(r.error, true);
+});
+$('#btnScanFolder').addEventListener('click', async () => {
+  await pushSyncSettings();
+  const r = await window.pywebview.api.start_scan_folder();
+  if (r && r.error) toast(r.error, true);
+});
+$('#btnStopScan').addEventListener('click', () => window.pywebview.api.stop_scan());
+
+// Callbacks pushed from Python worker thread
+window.onScanProgress = (done, total, label) => {
+  const wrap = $('#progWrap');
+  wrap.classList.add('show');
+  $('#progText').textContent = `${done}/${total} — ${label}`;
+  $('#progFill').style.width = `${Math.round((done / Math.max(1, total)) * 100)}%`;
+};
+window.onScanDone = (msg) => {
+  $('#progWrap').classList.remove('show');
+  toast(msg);
+};
+window.onResultAdded = (idx, r) => {
+  state.results[idx] = r;
+  checkedSet.add(idx);
+  renderTable();
+  if (state.selectedIdx === -1) selectRow(idx);
+};
+window.onResultUpdated = (idx, r) => {
+  state.results[idx] = r;
+  renderTable();
+  if (state.selectedIdx === idx) showPreview(idx);
+};
+
+function renderTable() {
+  const q = ($('#searchBox').value || '').trim().toLowerCase();
+  const rows = state.results;
+  let synced = 0, review = 0, pctSum = 0, pctCnt = 0;
+
+  rows.forEach(r => {
+    if (r.sync === 'synced') synced++;
+    if (!r.roll_valid || !r.scored || (r.warnings && r.warnings.length) || r.sync === 'not_found' || r.sync === 'error') review++;
+    if (r.scored && r.total_marks != null && r.max_marks > 0) {
+      pctSum += (r.total_marks / r.max_marks) * 100;
+      pctCnt++;
+    }
+  });
+
+  $('#kpiTotal').textContent = rows.length;
+  $('#kpiSynced').textContent = synced;
+  $('#kpiReview').textContent = review;
+  $('#kpiAvg').textContent = pctCnt ? `${(pctSum / pctCnt).toFixed(1)}%` : '0%';
+
+  let html = '';
+  rows.forEach((r, idx) => {
+    if (!r) return;
+    const matchStr = `${r.roll} ${r.file} ${r.student_name || ''}`.toLowerCase();
+    if (q && !matchStr.includes(q)) return;
+
+    const checked = checkedSet.has(idx) ? 'checked' : '';
+    const selCls = idx === state.selectedIdx ? 'selected-row' : '';
+    const scoreTxt = r.scored && r.total_marks != null ? `${r.total_marks}/${r.max_marks}` : 'N/A';
+    const ratio = (r.scored && r.max_marks > 0) ? (r.total_marks / r.max_marks) : 0;
+    const scoreCls = !r.scored ? 'none' : ratio >= 0.4 ? '' : 'low';
+
+    let stCls = 'pending', stTxt = 'Pending';
+    if (r.sync === 'synced') { stCls = ''; stTxt = r.student_name ? `Synced` : 'Synced'; }
+    else if (r.sync === 'not_found') { stCls = 'pending'; stTxt = 'Roll Not Found'; }
+    else if (r.sync === 'error') { stCls = 'error'; stTxt = 'Error'; }
+
+    html += `<tr class="${selCls}" data-idx="${idx}">
+      <td><input type="checkbox" class="chk row-chk" data-idx="${idx}" ${checked}></td>
+      <td><b>Roll: ${esc(r.roll || '------')}</b><div style="font-size:11px;color:#64748B">${esc(r.file)}${r.page > 1 ? ' · p' + r.page : ''}</div></td>
+      <td>${esc(r.set_latin || '-')} ${esc(r.set_code || '')}</td>
+      <td><span class="score-pill ${scoreCls}">${scoreTxt}</span></td>
+      <td><span class="status-pill ${stCls}">${stTxt}</span></td>
+      <td>
+        <button class="icon-btn btn-del" data-idx="${idx}" title="Delete">🗑</button>
+      </td>
+    </tr>`;
+  });
+  $('#tbody').innerHTML = html || `<tr><td colspan="6" style="text-align:center;padding:34px;color:#64748B">এখনো কোনো খাতা স্ক্যান করা হয়নি। নিচের <b>Scan PDF / Images</b> বাটনে চাপুন।</td></tr>`;
+}
+
+$('#searchBox').addEventListener('input', renderTable);
+$('#chkAll').addEventListener('change', e => {
+  if (e.target.checked) state.results.forEach((_, i) => checkedSet.add(i));
+  else checkedSet.clear();
+  renderTable();
+});
+
+$('#tbody').addEventListener('click', async e => {
+  const chk = e.target.closest('.row-chk');
+  if (chk) {
+    e.stopPropagation();
+    const idx = +chk.dataset.idx;
+    if (chk.checked) checkedSet.add(idx); else checkedSet.delete(idx);
+    return;
+  }
+  const del = e.target.closest('.btn-del');
+  if (del) {
+    e.stopPropagation();
+    const idx = +del.dataset.idx;
+    await window.pywebview.api.delete_result(idx);
+    state.results.splice(idx, 1);
+    checkedSet = new Set(state.results.map((_, i) => i));
+    state.selectedIdx = state.results.length ? 0 : -1;
+    renderTable();
+    if (state.selectedIdx >= 0) showPreview(state.selectedIdx);
+    return;
+  }
+  const tr = e.target.closest('tr[data-idx]');
+  if (tr) selectRow(+tr.dataset.idx);
+});
+
+function selectRow(idx) {
+  state.selectedIdx = idx;
+  renderTable();
+  showPreview(idx);
+}
+
+function showPreview(idx) {
+  const r = state.results[idx];
+  if (!r) return;
+  $('#qeRoll').value = r.roll || '';
+  $('#qeSet').value = r.set_latin || '-';
+  if (r.preview_url) {
+    const z = $('#zoomSlider').value;
+    $('#previewCanvas').innerHTML = `<img id="prevImg" src="${r.preview_url}" style="width:${z}%">`;
+  } else {
+    $('#previewCanvas').innerHTML = `<div class="preview-empty">এই খাতার প্রিভিউ পাওয়া যায়নি।</div>`;
+  }
+}
+
+$('#zoomSlider').addEventListener('input', () => {
+  const img = $('#prevImg');
+  if (img) img.style.width = $('#zoomSlider').value + '%';
+});
+
+$('#btnReSync').addEventListener('click', async () => {
+  if (state.selectedIdx < 0) return toast('প্রথমে একটি খাতা সিলেক্ট করুন', true);
+  await pushSyncSettings();
+  const roll = $('#qeRoll').value.trim();
+  const r = await window.pywebview.api.resync_single(state.selectedIdx, roll);
+  if (r && r.error) toast(r.error, true);
+  else toast('রোল আপডেট ও Re-Sync সম্পন্ন');
+});
+
+$('#btnSinglePdf').addEventListener('click', async () => {
+  if (state.selectedIdx < 0) return toast('আগে একটি খাতা সিলেক্ট করুন', true);
+  const r = await window.pywebview.api.export_pdf([state.selectedIdx]);
+  if (r && r.saved) toast('এই খাতার মার্কড PDF সেভ হয়েছে');
+  else if (r && r.error) toast(r.error, true);
+});
+
+$('#btnExportSel').addEventListener('click', async () => {
+  const idxs = [...checkedSet].sort((a, b) => a - b);
+  if (!idxs.length) return toast('অন্তত একটি খাতায় টিক দিন', true);
+  const r = await window.pywebview.api.export_pdf(idxs);
+  if (r && r.saved) toast(`${r.count}টি সিলেক্ট করা খাতার PDF সেভ হয়েছে`);
+  else if (r && r.error) toast(r.error, true);
+});
+
+$('#btnExportAll').addEventListener('click', async () => {
+  if (!state.results.length) return toast('কোনো খাতা স্ক্যান করা হয়নি', true);
+  const idxs = state.results.map((_, i) => i);
+  const r = await window.pywebview.api.export_pdf(idxs);
+  if (r && r.saved) toast(`সব (${r.count}টি) খাতার মার্কড PDF সেভ হয়েছে`);
+  else if (r && r.error) toast(r.error, true);
+});
+
+async function runBatchSync() {
+  await pushSyncSettings();
+  const r = await window.pywebview.api.sync_all_pending();
+  if (r && r.error) toast(r.error, true);
+  else if (r && r.message) toast(r.message);
+}
+$('#btnBatchSync').addEventListener('click', runBatchSync);
+$('#btnSyncNow2').addEventListener('click', runBatchSync);
+
+$('#btnExportCsv').addEventListener('click', async () => {
+  const r = await window.pywebview.api.export_csv();
+  if (r && r.saved) toast('CSV ফাইল সেভ হয়েছে');
+  else if (r && r.error) toast(r.error, true);
+});
+
+$('#btnClearAll').addEventListener('click', async () => {
+  await window.pywebview.api.clear_results();
+  state.results = [];
+  checkedSet.clear();
+  state.selectedIdx = -1;
+  renderTable();
+  $('#previewCanvas').innerHTML = `<div class="preview-empty">তালিকা পরিষ্কার করা হয়েছে।</div>`;
+  toast('সব ফলাফল মুছে ফেলা হয়েছে');
+});
+
+window.addEventListener('pywebviewready', initApp);
+</script>
+</body>
+</html>
